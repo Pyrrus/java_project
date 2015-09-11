@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+	<head>
+
+  		<title>Customer application</title>
+  		<link href="css/bootstrap.min.css" rel="stylesheet">
+  		<!--[if lt IE 9]>
+  			<script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  		<![endif]-->
+
+      <script src="js/angular.min.js"></script>
+
+      <style>
+         .nameTH { width: 20%; }
+      </style>
+
+	</head>
+
+	<body>
+
+    <div class="container row">
+        
+      <div>
+        <h2>Customer List</h2>
+        <div ng-app="mainApp" ng-controller="proController" name="customers" class="table-responsive">
+
+            <input style="display:inline" type="search" ng-model="search" placeholder="Search">
+
+            <button style="display:inline" ng-hide="switch" ng-click="toggle()" class="btn btn-default">Edit customer</button>
+
+            <button style="display:inline" ng-hide="!switch" ng-click="addItem()" class="btn btn-default">Add customer</button>
+
+            <button style="display:inline" ng-hide="!switch" ng-click="saver()" ng-disabled="off" class="btn btn-success">View customer list</button>
+          
+            <br />
+
+            <br />
+
+            <!-- hide the one part of the page using the funtion toggle -->
+            <div ng-hide="switch">
+
+              <table class="table table-striped">
+                   <tr>  
+                        <th class="nameTH">First Name</th>
+                        <th class="nameTH">Last Name</th>
+                        <th>Email</th>
+                        <th>Telephone</th>
+                        <th>Address</th>
+                   </tr>
+                   <tr ng-repeat="customer in customers.list | filter:search">
+                                <td class="nameTD">{{customer.firstName}}</td> 
+                                <td class="nameTD">{{customer.lastName}}</td>          
+                                <td>{{customer.email}}</td>
+                                <td>{{customer.phone}}</td>
+                                <td>
+                                    <address>
+                                       {{customer.street}}
+                                       <br /> 
+                                       {{customer.city}}, {{customer.state}} {{customer.zip}}
+                                    </address>
+                                </td>
+                   </tr>
+                   
+                </table>
+
+
+            </div>
+
+          <!-- hide the one part of the page using the funtion toggle -->
+          <div ng-hide="!switch">
+
+              <form name="myForm">
+
+                  <table class="table table-striped">
+                     <tr>  
+                        <th class="nameTH">First Name</th>
+                        <th class="nameTH">Last Name</th>
+                        <th>Email</th>
+                        <th>Telephone</th>
+                        <th>Address</th>
+                        <th>Remove</th>
+                     </tr>
+                     <tr ng-repeat="customer in customers.list | filter:search">
+                     <ng-form>
+                          <td class="nameTD"> <input type="text" ng-change="change()" ng-model="customer.firstName" name="fName" required> </td> 
+                                <td class="nameTD"><input type="text" ng-change="change()" ng-model="customer.lastName" name="lName" required></td>          
+                                <td><input type="text" ng-change="change()" ng-model="customer.email" name="name" required></td>
+                                <td>
+                                    <input type="text" ng-change="change()" ng-model="customer.phone" name="name" required> 
+                                    <br />
+                                    <p>
+                                        XXX-XXX-XXXX <br />
+                                        XXX.XXX.XXXX <br />
+                                        XXX XXX XXXX 
+                                    </p>
+                                
+                                
+                                </td>
+                                <td>
+                                    <address>
+                                       Street: <input type="text" ng-change="change()" ng-model="customer.street" name="street" required>
+                                       <br /> 
+                                       City: <input type="text" ng-change="change()" ng-model="customer.city" name="city" required>
+                                       <br />
+                                       State: <input type="text" ng-change="change()" ng-model="customer.state" name="state" required>
+                                       <br />
+                                       Zip code: <input type="text" ng-change="change()" ng-model="customer.zip" name="zip" required>
+                                    </address>
+                                </td>
+                                  <td><button href ng-click="removeItem($index)" class="btn btn-danger">Remove</button></td>
+                     </tr>
+                     </ng-form>
+                  </table>
+                  </form>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
+		<script src="js/bootstrap.min.js"></script>
+
+
+    <script>
+
+        var mainApp = angular.module("mainApp", []);
+
+        mainApp.controller('proController', function($scope, $http) {
+          // Json object hold the product list
+          $scope.customers = [];
+
+          // for the form validation to disabled "View products list" button
+          $scope.off = false;
+
+          // get the json information from the server
+              
+               $http.get('./testServet').success(function(data) { 
+                  console.log("success!");
+                  console.log(data);
+                  $scope.customers = data;
+              }); 
+
+
+           // Add the Item within the products
+           $scope.addItem = function() {
+                 
+                 $scope.customers.list.push({
+                          id: Math.floor((Math.random() * 111) + 1),
+                          firstName: "",
+                          lastName: "",
+                          email: "",
+                          phone: "",
+                          street: "",
+                          city: "",
+                          state: "",
+                          zip: ""
+                         
+                      });
+
+                 $scope.off = false;
+            };
+
+            $scope.change = function() {
+              $scope.off = false;
+            }
+
+            $scope.switch = false;
+
+            // remove the item from the list of the products
+            $scope.removeItem = function(index) {
+
+               
+               $http({
+                        method: 'POST',
+                        url: window.location.href + "delete",
+                        data: {
+                            id: $scope.customers.list[index].id
+                        },
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                    })
+                    .success(function(data) {
+                        // get the data from the server side for if the have any errors
+                        console.log(data);
+                    });
+                    
+                 $scope.customers.list.splice(index, 1);
+                 $scope.off = false;
+               
+            };
+
+            // switch to edit or not edit 
+            $scope.toggle = function() {
+                $scope.switch = !$scope.switch;
+            }
+
+            // saver is test the form to find the errors, and send the data to the php to save the json
+            $scope.saver = function() {
+                
+                // get the length of the json
+                var count = Object.keys($scope.customers.list).length;
+
+                // go through the json to validation the products. once the error find the break out the loop
+                for (var i = 0; i < count; i++) {
+                   
+
+                    if ($scope.customers.list[i].firstName == "" || typeof($scope.customers.list[i].firstName) == 'undefined') {
+                      $scope.off = true;
+                      break;
+                    } 
+
+                    if ($scope.customers.list[i].lastName == "" || typeof($scope.customers.list[i].lastName) == 'undefined') {
+                      $scope.off = true;
+                      break;
+                    } 
+
+                    if (!(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test($scope.customers.list[i].email)) || typeof($scope.customers.list[i].email) == 'undefined') {
+                        $scope.off = true;
+                        break;
+                    } 
+                    
+                    if (!(/^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/.test($scope.customers.list[i].phone)) || typeof($scope.customers.list[i].phone) == 'undefined') {
+                        $scope.off = true;
+                        break;
+                    }
+
+                }
+
+                // if the off is false. It will send the json to the php to be save. 
+                if ($scope.off != true) {
+   
+                    $http({
+                        method: 'POST',
+                        url: window.location.href + "adder",
+                        data: {
+                            list: $scope.customers.list
+                        },
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                    })
+                    .success(function(data) {
+                        // get the data from the server side for if the have any errors
+                        console.log(data);
+                    });
+
+                    // switch back to the list mode
+                    $scope.switch = !$scope.switch;
+
+                    // set the off to false 
+                    $scope.off = false;
+                }
+            }
+        });
+
+
+    </script>
+
+	</body>
+</html>
